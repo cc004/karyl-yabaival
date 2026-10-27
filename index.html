@@ -3,11 +3,12 @@
   <head>
     <meta charset="utf-8">
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Unity WebGL Player | AprilGames2024</title>
     <link rel="stylesheet" href="style.css">
   </head>
   <body>
-    <div id="unity-container" class="unity-desktop">
+    <div id="unity-container" class="unity-mobile">
       <div class="canvas-container">
         <canvas id="unity-canvas" width=1280 height=720 tabindex="-1"></canvas>
       </div>
@@ -28,6 +29,7 @@
 
       var container = document.querySelector("#unity-container");
       var canvas = document.querySelector("#unity-canvas");
+      var canvasContainer = document.querySelector(".canvas-container");
       var loadingBar = document.querySelector("#unity-loading-bar");
       var progressBarFull = document.querySelector("#unity-progress-bar-full");
       var fullscreenButton = document.querySelector("#unity-fullscreen-button");
@@ -77,27 +79,30 @@
       // the canvas DOM size and WebGL render target sizes yourself.
       // config.matchWebGLToCanvasSize = false;
 
-      // if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
-        // Mobile device style: fill the whole browser client area with the game canvas:
+      // Fit the entire 16:9 game inside the visible viewport, including on
+      // wide phones where sizing by width alone would crop the bottom.
+      function resizeGame() {
+        var viewport = window.visualViewport;
+        container.style.width = (viewport ? viewport.width : window.innerWidth) + "px";
+        container.style.height = (viewport ? viewport.height : window.innerHeight) + "px";
+        container.style.left = (viewport ? viewport.offsetLeft : 0) + "px";
+        container.style.top = (viewport ? viewport.offsetTop : 0) + "px";
 
-        var meta = document.createElement('meta');
-        meta.name = 'viewport';
-        meta.content = 'width=device-width, height=device-height, initial-scale=1.0, user-scalable=no, shrink-to-fit=yes';
-        document.getElementsByTagName('head')[0].appendChild(meta);
-        container.className = "unity-mobile";
-        canvas.className = "unity-mobile";
+        var style = window.getComputedStyle(container);
+        var width = container.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight);
+        var height = container.clientHeight - parseFloat(style.paddingTop) - parseFloat(style.paddingBottom);
+        var scale = Math.max(0, Math.min(width / 1280, height / 720));
+        canvasContainer.style.width = (1280 * scale) + "px";
+        canvasContainer.style.height = (720 * scale) + "px";
+      }
 
-        // To lower canvas resolution on mobile devices to gain some
-        // performance, uncomment the following line:
-        // config.devicePixelRatio = 1;
-
-
-      // } else {
-        // Desktop style: Render the game canvas in a window that can be maximized to fullscreen:
-
-        // canvas.style.width = "1280px";
-        // canvas.style.height = "720px";
-      // }
+      resizeGame();
+      window.addEventListener("resize", resizeGame);
+      window.addEventListener("orientationchange", resizeGame);
+      if (window.visualViewport) {
+        window.visualViewport.addEventListener("resize", resizeGame);
+        window.visualViewport.addEventListener("scroll", resizeGame);
+      }
 
       loadingBar.style.display = "block";
 
